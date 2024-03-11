@@ -1,6 +1,6 @@
 //0N88c7reGVsJjYUT
 
-import express from 'express';
+import express, { response } from 'express';
 import { PORT, mongodbURL } from './config.js';
 import mongoose from 'mongoose';
 import { Book} from './models/bookModel.js';
@@ -65,13 +65,59 @@ app.get('/books/:id', async (request, response) => {
     try {
         const { id } = request.params;
         const book = await Book.findById(id);
+
+        if(!book){
+            return response.status(404).send({message:'Book not found'});
+        }
         return response.status(200).json(book);
     }
     catch(error) {
         console.log(error.message);
-        request.status(500).send({message:error.message});
+        request.status(500).send({message:book});
     }
 
+})
+
+//Route to update a book
+app.put('/books/:id', async (request, response) => {
+    try {
+        if(!request.body.title || !request.body.author || !request.body.publishYear){
+            return response.status(400).send({message:'title, author, and publisherYear are required'});
+        }
+        const { id } = request.params
+        const result = await Book.findByIdAndUpdate(id, request.body);
+        if(!result){
+            return response.status(404).send({message:'Book not found'});
+        }
+        else {
+            return response.status(200).send({message:'Book updated successfully'});
+        }
+
+
+    }
+       
+    catch(error) {
+        console.log(error.message);
+        response.status(500).send({message:error.message});
+    }
+})
+
+//Route to delete a book
+app.delete('/books/:id', async (request, response) => {
+    try {
+        const { id } = request.params;
+        const result = await Book.findByIdAndDelete(id);
+        if(!result){
+            return response.status(404).send({message:'Book not found'});
+        }
+        else {
+            return response.status(200).send({message:'Book deleted successfully'});
+        }
+    }
+    catch(error) {
+        console.log(error.message);
+        response.status(500).send({message:error.message});
+    }
 })
 
 mongoose
